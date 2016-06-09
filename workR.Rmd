@@ -1,0 +1,119 @@
+---
+title: "projectNaomi"
+author: "Silveyra"
+date: "June 8, 2016"
+output: html_document
+---
+
+Practicing generating random normals
+
+```{r random normals}
+x=rnorm(1000)
+hist(x, main = "N(2,9)", xlab = "Random Numbers", nclass = 50)
+```
+
+
+1. Generate the phenotypic scores as 20 random normals. Call this vector pheno.
+
+```{r create pheno scores}
+nsamps=20
+pheno=rnorm(nsamps)
+```
+
+
+2. Generate the gene expression scores as a matrix with 1000 rows (genes) and 20 columns (samples). Call this matrix genes.
+
+```{r create matrix}
+ngenes=1000
+genes=matrix(rnorm(nsamps*ngenes),nc=nsamps)
+```
+
+
+3. Compute the 1000 correlations between the phenotypic scores and the gene expression scores. Note that you will need to transpose the gene expression matrix to do this. Call the correlations cors.
+
+```{r compute correlations}
+cors=cor(t(genes),pheno)
+```
+
+
+4. Plot a histogram of the correlations.
+
+```{r histogram of correlations}
+hist(cors,nclass=50,xlab="Correlations",main="Correlation between Gene Expression and Phenotype")
+```
+
+setting the seed so that we all have the same random normals
+
+```{r}
+set.seed(2016)
+rnorm(5)
+```
+
+doing the correlation exercise to obtain the null distribution for:
+1. The largest absolute correlation
+2. The largest correlation
+3. The smallest correlation
+4. The R2 of the regression after selecting the 10 genes with highest absolute correlation
+
+```{r simFunction}
+simR2=function(nsamp=20,ngene=1000,nsel=10){
+  if (nsel >= nsamp-1) stop("The number of genes selected must 
+                            be less than the sample size")
+  pheno=rnorm(nsamps)
+  genes=matrix(rnorm(nsamps*ngenes),ncol=nsamps)
+  cors=cor(t(genes),pheno)
+  selgenes=order(cors,decreasing=TRUE)[1:nsel]
+  sigGenes=genes[selgenes,]
+  R2=var(fitted(lm(pheno~t(sigGenes))))/var(pheno)
+  c(maxAbsR=max(abs(cors)),minR=min(cors),maxR=max(cors),Rsq=R2)
+}
+```
+
+```{r}
+simR2()
+```
+
+now we do it for all the genes
+```{r runSim}
+simN20G1000S10=matrix(nrow=1000,ncol=4)
+for (i in 1:1000) simN20G1000S10[i,]=simR2(nsamp=20,ngene=1000,nsel=10)
+```
+
+plotting the relevant info
+
+```{r histNULL,echo=FALSE}
+par(mfrow=c(2,2))
+hist(simN20G1000S10[,1], nclass=50,main="Distribution of Largest Absolute Correlation",xlab="Maximum Absolute Correlation")
+hist(simN20G1000S10[,2], nclass=50,main="Distribution of Smallest Correlation",xlab="Minimum Correlation")
+hist(simN20G1000S10[,3], nclass=50,main="Distribution of Largest Correlation",xlab="Maximum Correlation")
+hist(simN20G1000S10[,4], nclass=50,main="Distribution of R-square of Selected Genes",xlab="R-square")
+```
+
+
+Our sample was generated assuming that both the phenotypic scores and gene expression values are Normally distributed.
+
+As well, all of our genes are independent of each other.
+
+The simulation study is supposed to be a model of our biological system. So we need to capture the important aspects of the system.
+
+We also need to capture the data generation and analysis pipeline.
+
+
+
+```{r}
+sessionInfo()
+```
+
+
+Improving reproducibility
+
+
+1. Use R Markdown or similar software and include lots of explanatory text between the code chunks.
+
+2. Publish your R Markdown script along with your data as supplemental materials.
+
+3. In simulations, set a seed so that another user can generate identical results.
+
+4. Your last code chunk should end with sessionInfo().
+
+Despues de este hicimos el archivo que se llama bootstrap-
